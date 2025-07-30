@@ -1,0 +1,1306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>PixUp - Node.js Edition</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
+    <style>
+        /* Base styles */
+        body {
+            margin: 0;
+            font-family: 'Inter', sans-serif; /* Using Inter for consistency */
+            background: #f4f4f4;
+            transition: background 0.3s, color 0.3s;
+            line-height: 1.6;
+        }
+        body.dark {
+            background: #1e1e1e;
+            color: white;
+        }
+
+        /* Navigation Bar */
+        nav {
+            background: #ef4444; /* Tailwind red-500 */
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 60px;
+            position: relative;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        nav .nav-left,
+        nav .nav-right {
+            width: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+            cursor: pointer;
+        }
+        nav .logo {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            font-weight: bold;
+            font-size: 1.5em;
+        }
+
+        /* Dropdown Menu */
+        .menu-dropdown {
+            position: absolute;
+            top: 60px;
+            right: 10px;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 8px; /* Rounded corners */
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            display: none;
+            flex-direction: column;
+            z-index: 99;
+            overflow: hidden;
+        }
+        body.dark .menu-dropdown {
+            background: #2c2c2c;
+            border-color: #555;
+            color: white;
+        }
+        .menu-dropdown button {
+            border: none;
+            background: #1f2937; /* Darker gray for buttons */
+            color: white;
+            padding: 12px 15px;
+            text-align: left;
+            cursor: pointer;
+            font-weight: bold;
+            border-radius: 0; /* No individual button rounding to keep dropdown cohesive */
+            transition: background 0.2s;
+        }
+        .menu-dropdown button:hover {
+            background: #374151; /* Lighter gray on hover */
+        }
+        .menu-dropdown button i {
+            margin-right: 8px;
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 768px; /* Slightly wider for better content display */
+            margin: 20px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 12px; /* More rounded */
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        body.dark .container {
+            background: #2c2c2c;
+            color: white;
+            border-color: #555;
+        }
+
+        /* Create Post Section */
+        .create-post {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 20px;
+        }
+        body.dark .create-post {
+            border-bottom-color: #444;
+        }
+        #postText {
+            width: calc(100% - 20px); /* Account for padding */
+            min-height: 100px;
+            padding: 10px;
+            resize: vertical; /* Allow vertical resizing only */
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            font-size: 1em;
+            background: #fdfdfd;
+        }
+        body.dark #postText {
+            background: #3d3d3d;
+            border-color: #666;
+            color: white;
+        }
+
+        .create-post button,
+        .create-post label {
+            background: #ef4444; /* Tailwind red-500 */
+            color: white;
+            border: none;
+            padding: 12px 15px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: center;
+            width: 100%; /* Full width in default flow */
+            transition: background 0.2s, transform 0.1s;
+        }
+        .create-post button:hover,
+        .create-post label:hover {
+            background: #dc2626; /* Darker red on hover */
+            transform: translateY(-1px);
+        }
+        .create-post button:active,
+        .create-post label:active {
+            transform: translateY(0);
+        }
+
+        .create-post select {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            font-weight: bold;
+            background: #fdfdfd;
+        }
+        body.dark .create-post select {
+            background: #3d3d3d;
+            border-color: #666;
+            color: white;
+        }
+
+        /* Media Previews */
+        #mediaPreview {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 15px;
+            padding: 10px;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+            align-items: center; /* Center media */
+        }
+        body.dark #mediaPreview {
+            border-color: #444;
+            background-color: #333;
+        }
+        #imagePreview, #videoPreview {
+            max-width: 80%; /* Wider preview */
+            max-height: 250px; /* Constrain height */
+            height: auto;
+            object-fit: contain; /* Ensure aspect ratio */
+            margin-top: 10px;
+            border-radius: 8px;
+            display: none;
+        }
+        #removeImageBtn, #removeVideoBtn {
+            background: #6b7280; /* Tailwind gray-500 */
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.9em;
+            width: auto;
+            margin-top: 5px;
+        }
+        #removeImageBtn:hover, #removeVideoBtn:hover {
+            background: #4b5563; /* Darker gray on hover */
+        }
+
+        /* Post Feed */
+        .post {
+            margin-top: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #ddd;
+            position: relative;
+            padding-top: 15px;
+        }
+        body.dark .post {
+            border-bottom-color: #444;
+        }
+        .post:last-child {
+            border-bottom: none; /* No border on the last post */
+        }
+        .post .username {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #3b82f6; /* Tailwind blue-500 for usernames */
+            font-size: 1.1em;
+            cursor: pointer; /* Make username clickable */
+            display: inline-block; /* Allow padding/margin for clickable area */
+        }
+        .post .username:hover {
+            text-decoration: underline;
+        }
+
+        .post .content {
+            font-size: 1em;
+            line-height: 1.6;
+            word-wrap: break-word; /* Ensure long words break */
+            white-space: pre-wrap; /* Preserve whitespace and line breaks */
+        }
+        .post img.post-img, .post video.post-video {
+            max-width: 100%;
+            height: auto; /* Maintain aspect ratio */
+            margin-top: 15px;
+            border-radius: 8px;
+            object-fit: cover;
+        }
+
+        /* Action Buttons (Like/Dislike) */
+        .post-actions {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .post-actions button {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: background 0.2s, transform 0.1s;
+        }
+        .post-actions button:hover {
+            transform: translateY(-1px);
+        }
+        .post-actions button.liked {
+            background: #22c55e; /* Green for liked */
+        }
+        .post-actions button.disliked {
+            background: #6b7280; /* Gray for disliked */
+        }
+
+        /* Delete Button for Posts */
+        .post .delete-btn {
+            position: absolute;
+            top: 15px; /* Adjust vertical position */
+            right: 15px;
+            background: #dc2626; /* Darker red */
+            color: white;
+            border: none;
+            padding: 6px 10px;
+            font-size: 0.85em;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .post .delete-btn:hover {
+            background: #b91c1c;
+        }
+
+        /* Comments Section */
+        .comments {
+            margin-top: 15px;
+            padding-left: 15px;
+            border-left: 3px solid #ccc; /* Thicker border */
+        }
+        body.dark .comments {
+            border-left-color: #555;
+        }
+        .comment-item {
+            margin-bottom: 8px;
+            font-size: 0.95em;
+        }
+        .comment-item strong {
+            color: #3b82f6; /* Blue for comment usernames */
+            margin-right: 5px;
+        }
+        .comment-input-area {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        .comment-input {
+            flex-grow: 1; /* Take available space */
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 0.9em;
+            background: #fdfdfd;
+        }
+        body.dark .comment-input {
+            background: #3d3d3d;
+            border-color: #666;
+            color: white;
+        }
+        .comment-input-area button {
+            background: #3b82f6; /* Blue for comment button */
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .comment-input-area button:hover {
+            background: #2563eb;
+        }
+
+        /* Utility classes */
+        .center-text {
+            text-align: center;
+        }
+        .loading-spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #ef4444;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+            display: none; /* Hidden by default */
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Filter Indicator */
+        #filterIndicator {
+            text-align: center;
+            margin-top: -10px;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #3b82f6; /* Blue color for filter text */
+        }
+        #clearFilterBtn {
+            background: #3b82f6; /* Blue button for clearing filter */
+            margin-top: 10px;
+            padding: 8px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: block; /* Make it a block element for centering */
+            margin-left: auto;
+            margin-right: auto;
+            width: fit-content; /* Fit content width */
+        }
+        #clearFilterBtn:hover {
+            background: #2563eb;
+        }
+
+
+        /* Modal for messages */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 100; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #888;
+            border-radius: 10px;
+            width: 80%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            position: relative;
+        }
+        body.dark .modal-content {
+            background-color: #3d3d3d;
+            border-color: #666;
+            color: white;
+        }
+        .modal-buttons {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+        .modal-button {
+            background-color: #ef4444;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .modal-button:hover {
+            background-color: #dc2626;
+        }
+        .modal-button.cancel {
+            background-color: #6b7280;
+        }
+        .modal-button.cancel:hover {
+            background-color: #4b5563;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 600px) {
+            .container {
+                margin: 10px;
+                padding: 15px;
+            }
+            .create-post button,
+            .create-post label {
+                padding: 10px;
+                font-size: 0.9em;
+            }
+            .post .delete-btn {
+                top: 10px;
+                right: 10px;
+                font-size: 0.8em;
+                padding: 5px 8px;
+            }
+            .comment-input-area {
+                flex-direction: column;
+                gap: 5px;
+            }
+            .comment-input-area button {
+                width: 100%;
+                padding: 8px;
+            }
+        }
+
+        /* Login/Signup Modal Specific Styles */
+        #authModal .input-group {
+            margin-bottom: 15px;
+            text-align: left;
+        }
+        #authModal .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+        body.dark #authModal .input-group label {
+            color: white;
+        }
+        #authModal .input-group input {
+            width: calc(100% - 22px); /* Adjust for padding and border */
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 1em;
+            background: #fdfdfd;
+        }
+        body.dark #authModal .input-group input {
+            background: #3d3d3d;
+            border-color: #666;
+            color: white;
+        }
+        #authModal .modal-buttons button {
+            flex: 1; /* Make buttons take equal width */
+        }
+        #authModal .toggle-auth-mode {
+            background: none;
+            border: none;
+            color: #3b82f6;
+            cursor: pointer;
+            margin-top: 15px;
+            font-size: 0.9em;
+            text-decoration: underline;
+            padding: 5px;
+        }
+        #authModal .toggle-auth-mode:hover {
+            color: #2563eb;
+        }
+    </style>
+    <script>
+        // CLIENT-SIDE JAVASCRIPT FOR PIXUP APP (HTML)
+
+        // User state (stored in browser's localStorage)
+        let currentUserId = localStorage.getItem('pixup_currentUserId') || null; // Starts as null, requires login
+        let currentUsername = localStorage.getItem(`pixup_username_${currentUserId}`) || 'Anonymous';
+        let filteredUserId = null; // Variable to hold the ID of the user whose posts are currently filtered
+
+        // Declare variables that will hold DOM elements
+        let nameBtn;
+        let imgInput;
+        let vidInput;
+        let imgPrev;
+        let vidPrev;
+        let mediaDiv;
+        let removeImgB;
+        let removeVidB;
+        let welcomeText;
+        let postTextarea;
+        let feedContainer;
+        let noPostsMessage;
+        let loadingSpinner;
+        let filterIndicator;
+        let clearFilterBtn;
+
+        let messageModal;
+        let modalMessage;
+        let modalConfirmButtons;
+        let modalAlertButton;
+
+        let authModal;
+        let authUsernameInput;
+        let authPasswordInput;
+        let authSubmitBtn;
+        let authToggleModeBtn;
+        let authModalTitle;
+        let authMode = 'login'; // 'login' or 'signup'
+
+        // Base URL for your Node.js server API
+        const API_BASE_URL = 'http://localhost:3000'; // FIX: Removed '/api' from base URL
+
+        // --- Helper for showing custom messages/confirms ---
+        function showMessage(message, type = 'alert', callback = null) {
+            // Ensure modal elements are available before trying to use them
+            if (!messageModal || !modalMessage || !modalConfirmButtons || !modalAlertButton) {
+                console.error("Modal elements not found. Cannot show message:", message);
+                alert(message); // Fallback to native alert
+                if (callback) callback(type === 'confirm' ? false : undefined);
+                return;
+            }
+
+            modalMessage.textContent = message;
+            if (type === 'confirm') {
+                modalConfirmButtons.style.display = 'flex';
+                modalAlertButton.style.display = 'none';
+                const confirmBtn = document.getElementById('modalConfirmOk');
+                const cancelBtn = document.getElementById('modalConfirmCancel');
+
+                const handleConfirm = () => {
+                    messageModal.style.display = 'none';
+                    confirmBtn.removeEventListener('click', handleConfirm);
+                    cancelBtn.removeEventListener('click', handleCancel);
+                    if (callback) callback(true);
+                };
+                const handleCancel = () => {
+                    messageModal.style.display = 'none';
+                    confirmBtn.removeEventListener('click', handleConfirm);
+                    cancelBtn.removeEventListener('click', handleCancel);
+                    if (callback) callback(false);
+                };
+
+                confirmBtn.removeEventListener('click', handleConfirm);
+                cancelBtn.removeEventListener('click', handleCancel);
+
+                confirmBtn.addEventListener('click', handleConfirm);
+                cancelBtn.addEventListener('click', handleCancel);
+
+            } else { // 'alert'
+                modalConfirmButtons.style.display = 'none';
+                modalAlertButton.style.display = 'block';
+                const okBtn = document.getElementById('modalAlertOk');
+                const handleClick = () => {
+                    messageModal.style.display = 'none';
+                    okBtn.removeEventListener('click', handleClick);
+                    if (callback) callback();
+                };
+                okBtn.removeEventListener('click', handleClick);
+                okBtn.addEventListener('click', handleClick);
+            }
+            messageModal.style.display = 'flex';
+        }
+
+        // --- Auth Modal Logic ---
+        function showAuthModal() {
+            if (!authModal || !authModalTitle || !authUsernameInput || !authPasswordInput || !authSubmitBtn || !authToggleModeBtn) {
+                console.error("Auth modal elements not found.");
+                return;
+            }
+            authMode = 'login'; // Default to login when opening
+            updateAuthModalUI();
+            authModal.style.display = 'flex';
+            authUsernameInput.focus();
+        }
+
+        function updateAuthModalUI() {
+            authModalTitle.textContent = authMode === 'login' ? 'Login to PixUp' : 'Sign Up for PixUp';
+            authSubmitBtn.textContent = authMode === 'login' ? 'Login' : 'Sign Up';
+            authToggleModeBtn.textContent = authMode === 'login' ? 'New user? Sign Up' : 'Already have an account? Login';
+            // Clear inputs when switching mode
+            authUsernameInput.value = '';
+            authPasswordInput.value = '';
+        }
+
+        async function handleAuthSubmit() {
+            const username = authUsernameInput.value.trim();
+            const password = authPasswordInput.value;
+
+            if (!username || !password) {
+                showMessage("Please enter both username and password.", 'alert');
+                return;
+            }
+
+            const endpoint = authMode === 'login' ? '/api/login' : '/api/signup';
+            try {
+                // FIX: Corrected API_BASE_URL + endpoint concatenation
+                const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.message || `Failed to ${authMode}`);
+                }
+
+                currentUserId = data.userId;
+                currentUsername = data.username;
+                localStorage.setItem('pixup_currentUserId', currentUserId);
+                localStorage.setItem(`pixup_username_${currentUserId}`, currentUsername);
+
+                authModal.style.display = 'none'; // Close modal
+                updateWelcomeMessage();
+                updateNameButton();
+                fetchPosts(); // Refresh posts after successful auth
+                showMessage(data.message || `${authMode === 'login' ? 'Logged in' : 'Signed up'} successfully! Welcome, ${currentUsername}!`, 'alert');
+
+            } catch (error) {
+                console.error(`Error during ${authMode}:`, error);
+                showMessage(error.message || `Failed to ${authMode}. Please try again.`, 'alert');
+            }
+        }
+
+        function toggleAuthMode() {
+            authMode = authMode === 'login' ? 'signup' : 'login';
+            updateAuthModalUI();
+        }
+
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', initApp);
+
+        function initApp() {
+            // Assign DOM elements here, AFTER DOMContentLoaded
+            nameBtn = document.getElementById('nameBtn');
+            imgInput = document.getElementById('imageInput');
+            vidInput = document.getElementById('videoInput');
+            imgPrev = document.getElementById('imagePreview');
+            vidPrev = document.getElementById('videoPreview');
+            mediaDiv = document.getElementById('mediaPreview');
+            removeImgB = document.getElementById('removeImageBtn');
+            removeVidB = document.getElementById('removeVideoBtn');
+            welcomeText = document.getElementById('welcome');
+            postTextarea = document.getElementById('postText');
+            feedContainer = document.getElementById('feed');
+            noPostsMessage = document.getElementById('noPosts');
+            loadingSpinner = document.getElementById('loadingSpinner');
+            filterIndicator = document.getElementById('filterIndicator');
+            clearFilterBtn = document.getElementById('clearFilterBtn');
+
+            messageModal = document.getElementById('messageModal');
+            modalMessage = document.getElementById('modalMessage');
+            modalConfirmButtons = document.getElementById('modalConfirmButtons');
+            modalAlertButton = document.getElementById('modalAlertButton');
+
+            authModal = document.getElementById('authModal');
+            authUsernameInput = document.getElementById('authUsernameInput');
+            authPasswordInput = document.getElementById('authPasswordInput');
+            authSubmitBtn = document.getElementById('authSubmitBtn');
+            authToggleModeBtn = document.getElementById('authToggleModeBtn');
+            authModalTitle = document.getElementById('authModalTitle');
+
+            // Attach event listeners for auth modal
+            if (authSubmitBtn) authSubmitBtn.addEventListener('click', handleAuthSubmit);
+            if (authToggleModeBtn) authToggleModeBtn.addEventListener('click', toggleAuthMode);
+            if (authModal) { // Close modal if clicking outside content
+                authModal.addEventListener('click', (e) => {
+                    if (e.target === authModal) {
+                        authModal.style.display = 'none';
+                    }
+                });
+            }
+            // Allow pressing Enter in auth inputs to submit
+            if (authUsernameInput) {
+                authUsernameInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') handleAuthSubmit();
+                });
+            }
+            if (authPasswordInput) {
+                authPasswordInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') handleAuthSubmit();
+                });
+            }
+
+
+            // Now that elements are assigned, proceed with app initialization
+            updateWelcomeMessage();
+            updateNameButton();
+            fetchPosts(); // Initial fetch of posts
+            updateRemoveButtons(); // Initialize media preview buttons state
+
+            // Attach media input event listeners here, after elements are guaranteed to exist
+            if (imgInput) {
+                imgInput.addEventListener('change', () => {
+                    const file = imgInput.files[0];
+                    if (!file || !imgPrev) return;
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                        imgPrev.src = reader.result;
+                        imgPrev.style.display = 'block';
+                        vidPrev.style.display = 'none'; // Hide video if image is selected
+                        if (vidInput) vidInput.value = ''; // Clear video input
+                        updateRemoveButtons();
+                    };
+                    reader.readAsDataURL(file); // Convert to Base64
+                });
+            }
+
+            if (vidInput) {
+                vidInput.addEventListener('change', () => {
+                    const file = vidInput.files[0];
+                    if (!file || !vidPrev) return;
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                        vidPrev.src = reader.result;
+                        vidPrev.style.display = 'block';
+                        imgPrev.style.display = 'none'; // Hide image if video is selected
+                        if (imgInput) imgInput.value = ''; // Clear image input
+                        updateRemoveButtons();
+                    };
+                    reader.readAsDataURL(file); // Convert to Base64
+                });
+            }
+
+            const emojiPicker = document.getElementById('emojiPicker');
+            if (emojiPicker) {
+                emojiPicker.addEventListener('change', e => {
+                    if (postTextarea) postTextarea.value += e.target.value;
+                    e.target.value = ''; // Reset dropdown after selection
+                });
+            }
+
+            // Redirect to login if not authenticated on load
+            if (!currentUserId || currentUsername === 'Anonymous') {
+                showAuthModal();
+            }
+        }
+
+        // --- User/Name Management ---
+        function updateNameButton() {
+            if (!nameBtn) return; // Defensive check
+            if (currentUserId && currentUsername !== 'Anonymous') {
+                nameBtn.innerHTML = `<i class="fas fa-user-slash"></i> Logout (${currentUsername})`;
+                nameBtn.onclick = logoutUser;
+            } else {
+                nameBtn.innerHTML = '<i class="fas fa-user"></i> Login / Sign Up';
+                nameBtn.onclick = showAuthModal;
+            }
+        }
+
+        function logoutUser() {
+            showMessage("Are you sure you want to log out?", 'confirm', (result) => {
+                if (result) {
+                    localStorage.removeItem('pixup_currentUserId');
+                    localStorage.removeItem(`pixup_username_${currentUserId}`); // Clear specific username
+                    currentUserId = null; // Set to null after logout
+                    currentUsername = 'Anonymous';
+                    updateWelcomeMessage();
+                    updateNameButton();
+                    fetchPosts(); // Refresh posts after logout
+                    showMessage("You have been logged out.", 'alert', () => {
+                        showAuthModal(); // Prompt for login after logout
+                    });
+                }
+            });
+        }
+
+        function updateWelcomeMessage() {
+            if (welcomeText) { // Defensive check
+                welcomeText.innerText = currentUsername === 'Anonymous'
+                    ? 'Welcome!' : `Welcome, ${currentUsername}! (ID: ${currentUserId ? currentUserId.substring(0, 8) + '...' : 'N/A'})`; // Shorten for display
+            }
+            if (postTextarea) { // Defensive check
+                postTextarea.placeholder = `What's on your mind, ${currentUsername}?`;
+                // Disable post area if not logged in
+                postTextarea.disabled = (currentUsername === 'Anonymous');
+            }
+            // Disable other post-related buttons if not logged in
+            const createPostBtn = document.querySelector('.create-post button');
+            if (createPostBtn) createPostBtn.disabled = (currentUsername === 'Anonymous');
+            const imageInputLabel = document.querySelector('label[for="imageInput"]');
+            if (imageInputLabel) imageInputLabel.style.pointerEvents = (currentUsername === 'Anonymous') ? 'none' : 'auto';
+            const videoInputLabel = document.querySelector('label[for="videoInput"]');
+            if (videoInputLabel) videoInputLabel.style.pointerEvents = (currentUsername === 'Anonymous') ? 'none' : 'auto';
+
+            // Also disable the emoji picker if not logged in
+            const emojiPicker = document.getElementById('emojiPicker');
+            if (emojiPicker) {
+                emojiPicker.disabled = (currentUsername === 'Anonymous');
+            }
+        }
+
+        // --- Fetching and Rendering Posts ---
+        let allPosts = []; // Store all posts received from the server
+
+        async function fetchPosts() {
+            if (loadingSpinner) {
+                loadingSpinner.style.display = 'block'; // Show spinner
+            } else {
+                console.warn("Loading spinner element not found. Skipping spinner display.");
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/posts`); // FIX: Added '/api' here
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                allPosts = await response.json();
+                renderPosts(); // Re-render posts based on current filter state
+            } catch (error) {
+                console.error("Error fetching posts:", error);
+                if (modalMessage) {
+                    showMessage("Failed to load posts from server. Is the Node.js server running?", 'alert');
+                } else {
+                    console.error("Modal message element not found, cannot display fetch error message to user.");
+                }
+            } finally {
+                if (loadingSpinner) {
+                    loadingSpinner.style.display = 'none'; // Hide spinner
+                }
+            }
+        }
+
+        function renderPosts() {
+            if (!feedContainer || !noPostsMessage) return; // Defensive checks
+
+            let postsToRender = allPosts;
+            if (filterIndicator && clearFilterBtn) { // Check for filter elements existence
+                if (filteredUserId) {
+                    const filteredUserPosts = allPosts.filter(post => post.userId === filteredUserId);
+                    if (filteredUserPosts.length > 0) {
+                        filterIndicator.textContent = `Showing posts by ${filteredUserPosts[0].username} (ID: ${filteredUserId.substring(0, 8)}...)`;
+                    } else {
+                        // If no posts for the filtered user, find the username from allPosts if available
+                        const userInAllPosts = allPosts.find(post => post.userId === filteredUserId);
+                        if (userInAllPosts) {
+                            filterIndicator.textContent = `No posts found for ${userInAllPosts.username} (ID: ${filteredUserId.substring(0, 8)}...)`;
+                        } else {
+                            filterIndicator.textContent = `No posts found for filtered user (ID: ${filteredUserId.substring(0, 8)}...)`;
+                        }
+                    }
+                    postsToRender = filteredUserPosts;
+                    clearFilterBtn.style.display = 'block';
+                } else {
+                    filterIndicator.textContent = '';
+                    clearFilterBtn.style.display = 'none';
+                }
+            }
+
+
+            feedContainer.innerHTML = '';
+            // Sort posts by timestamp in descending order (latest first)
+            const sortedPosts = [...postsToRender].sort((a, b) => (new Date(b.timestamp).getTime() || 0) - (new Date(a.timestamp).getTime() || 0));
+
+            noPostsMessage.textContent = sortedPosts.length === 0 ? 'No posts yet. Create one!' : '';
+
+            sortedPosts.forEach(post => {
+                const el = document.createElement('div');
+                el.className = 'post';
+
+                const liked = post.likedBy ? post.likedBy.includes(currentUserId) : false;
+                const disliked = post.dislikedBy ? post.dislikedBy.includes(currentUserId) : false;
+
+                el.innerHTML = `
+                    <div class="username" onclick="filterByUser('${post.userId}')">${post.username}</div>
+                    <div class="content">${post.content}</div>
+                    ${post.image ? `<img class="post-img" src="${post.image}" alt="Post Image">` : ''}
+                    ${post.video ? `<video class="post-video" src="${post.video}" controls preload="metadata"></video>` : ''}
+                    <div class="post-actions">
+                        <button onclick="toggleLike('${post.id}')" class="${liked ? 'liked' : ''}">
+                            <i class="fas fa-thumbs-up"></i> ${post.likedBy ? post.likedBy.length : 0}
+                        </button>
+                        <button onclick="toggleDislike('${post.id}')" class="${disliked ? 'disliked' : ''}">
+                            <i class="fas fa-thumbs-down"></i> ${post.dislikedBy ? post.dislikedBy.length : 0}
+                        </button>
+                    </div>
+                    <div class="comments">
+                        ${(post.comments || []).map(c =>
+                            `<div class="comment-item"><strong>${c.user}:</strong> ${c.text}</div>`
+                        ).join('')}
+                        <div class="comment-input-area">
+                            <input id="comment-input-${post.id}" class="comment-input" placeholder="Add comment...">
+                            <button onclick="addComment('${post.id}')" ${currentUsername === 'Anonymous' ? 'disabled' : ''}>Comment</button>
+                        </div>
+                    </div>`;
+
+                if (post.userId === currentUserId) { // Only show delete for owner
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = 'delete-btn';
+                    deleteBtn.textContent = 'Delete';
+                    deleteBtn.onclick = () => deletePost(post.id);
+                    el.appendChild(deleteBtn);
+                }
+                feedContainer.appendChild(el);
+            });
+        }
+
+        // --- Filtering Posts ---
+        function filterByUser(userId) {
+            if (userId === filteredUserId) { // If clicking same user, clear filter
+                clearFilter();
+                return;
+            }
+            filteredUserId = userId;
+            fetchPosts(); // Re-fetch posts to ensure all data is present for filtering
+        }
+
+        function clearFilter() {
+            filteredUserId = null;
+            renderPosts(); // Re-render posts to show all
+        }
+
+        // --- Post Actions (Client-side API Calls) ---
+        async function createPost() {
+            if (currentUsername === 'Anonymous') {
+                showMessage("Please log in or sign up to create posts.", 'alert');
+                showAuthModal();
+                return;
+            }
+
+            const text = postTextarea.value.trim();
+            const img = imgPrev && imgPrev.style.display === 'block' ? imgPrev.src : null;
+            const vid = vidPrev && vidPrev.style.display === 'block' ? vidPrev.src : null;
+
+            if (!text && !img && !vid) {
+                showMessage("Post cannot be empty!", 'alert');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/posts`, { // FIX: Added '/api' here
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        userId: currentUserId,
+                        username: currentUsername,
+                        content: text,
+                        image: img,
+                        video: vid
+                    })
+                });
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Failed to create post');
+                }
+                postTextarea.value = '';
+                if (imgInput) imgInput.value = '';
+                if (vidInput) vidInput.value = '';
+                removeMedia(); // Clear media previews after posting
+                fetchPosts(); // Refresh posts
+            } catch (error) {
+                console.error("Error creating post:", error);
+                showMessage(error.message || "Failed to create post. Please ensure server is running and accessible.", 'alert');
+            }
+        }
+
+        async function deletePost(postId) {
+            if (currentUsername === 'Anonymous') {
+                showMessage("Please log in to delete posts.", 'alert');
+                showAuthModal();
+                return;
+            }
+            showMessage("Are you sure you want to delete this post?", 'confirm', async (result) => {
+                if (result) {
+                    try {
+                        const response = await fetch(`${API_BASE_URL}/api/posts/${postId}`, { // FIX: Added '/api' here
+                            method: 'DELETE',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ userId: currentUserId }) // Send userId for server-side validation
+                        });
+                        if (!response.ok) {
+                            const errorData = await response.json();
+                            throw new Error(errorData.message || 'Failed to delete post or not authorized');
+                        }
+                        fetchPosts(); // Refresh posts
+                    } catch (error) {
+                        console.error("Error deleting post:", error);
+                        showMessage(error.message || "Failed to delete post. You might not own this post or server error occurred.", 'alert');
+                    }
+                }
+            });
+        }
+
+        async function clearAllPosts() {
+            if (currentUsername === 'Anonymous') {
+                showMessage("Please log in to clear your posts.", 'alert');
+                showAuthModal();
+                return;
+            }
+            showMessage("Are you sure you want to delete ALL your posts?", 'confirm', async (result) => {
+                if (result) {
+                    try {
+                        const response = await fetch(`${API_BASE_URL}/api/posts/clear_mine`, { // FIX: Added '/api' here
+                            method: 'POST', // Using POST as DELETE with body is not standard
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ userId: currentUserId })
+                        });
+                        if (!response.ok) {
+                             const errorData = await response.json();
+                             throw new Error(errorData.message || 'Failed to clear all posts');
+                        }
+                        fetchPosts(); // Refresh posts
+                    } catch (error) {
+                        console.error("Error clearing all posts:", error);
+                        showMessage(error.message || "Failed to clear your posts. Server error or no posts found.", 'alert');
+                    }
+                }
+            });
+        }
+
+        async function toggleLike(postId) {
+            if (currentUsername === 'Anonymous') {
+                showMessage("Please log in to like posts.", 'alert');
+                showAuthModal();
+                return;
+            }
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/posts/${postId}/like`, { // FIX: Added '/api' here
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: currentUserId })
+                });
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Failed to toggle like');
+                }
+                fetchPosts(); // Refresh posts
+            } catch (error) {
+                console.error("Error toggling like:", error);
+                showMessage(error.message, 'alert'); // Show error message from server
+            }
+        }
+
+        async function toggleDislike(postId) {
+            if (currentUsername === 'Anonymous') {
+                showMessage("Please log in to dislike posts.", 'alert');
+                showAuthModal();
+                return;
+            }
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/posts/${postId}/dislike`, { // FIX: Added '/api' here
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: currentUserId })
+                });
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Failed to toggle dislike');
+                }
+                fetchPosts(); // Refresh posts
+            } catch (error) {
+                console.error("Error toggling dislike:", error);
+                showMessage(error.message, 'alert'); // Show error message from server
+            }
+        }
+
+        async function addComment(postId) {
+            if (currentUsername === 'Anonymous') {
+                showMessage("Please log in to comment.", 'alert');
+                showAuthModal();
+                return;
+            }
+            const commentInput = document.getElementById(`comment-input-${postId}`);
+            const commentText = commentInput ? commentInput.value.trim() : '';
+
+            if (!commentText) {
+                showMessage("Comment cannot be empty!", 'alert');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/posts/${postId}/comment`, { // FIX: Added '/api' here
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        userId: currentUserId,
+                        username: currentUsername,
+                        text: commentText
+                    })
+                });
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Failed to add comment');
+                }
+                if (commentInput) commentInput.value = ''; // Clear input after posting
+                fetchPosts(); // Refresh posts
+            } catch (error) {
+                console.error("Error adding comment:", error);
+                showMessage(error.message || "Failed to add comment. Server error occurred.", 'alert');
+            }
+        }
+
+        // --- Menu & Theme Toggles ---
+        function toggleMenu() {
+            const menu = document.getElementById('menuDropdown');
+            const icon = document.querySelector('.nav-right i');
+            if (!menu || !icon) return;
+            if (menu.style.display === 'flex') {
+                menu.style.display = 'none';
+                icon.classList.replace('fa-times', 'fa-bars');
+            } else {
+                menu.style.display = 'flex';
+                icon.classList.replace('fa-bars', 'fa-times');
+            }
+        }
+
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark');
+        }
+
+        // --- Media Preview Logic ---
+        function updateRemoveButtons() {
+            if (!mediaDiv || !removeImgB || !removeVidB || !imgPrev || !vidPrev) return;
+            const hasImg = imgPrev.style.display === 'block';
+            const hasVid = vidPrev.style.display === 'block';
+            removeImgB.style.display = hasImg ? 'inline-block' : 'none';
+            removeVidB.style.display = hasVid ? 'inline-block' : 'none';
+            mediaDiv.style.display = (hasImg || hasVid) ? 'flex' : 'none'; // Use flex to center items
+        }
+
+        function removeImage() {
+            if (!imgPrev || !imgInput) return;
+            imgPrev.src = '';
+            imgPrev.style.display = 'none';
+            imgInput.value = '';
+            updateRemoveButtons();
+        }
+
+        function removeVideo() {
+            if (!vidPrev || !vidInput) return;
+            vidPrev.src = '';
+            vidPrev.style.display = 'none';
+            vidInput.value = '';
+            updateRemoveButtons();
+        }
+
+        function removeMedia() {
+            removeImage();
+            removeVideo();
+        }
+
+        // Expose functions to global scope for HTML event handlers
+        window.toggleMenu = toggleMenu;
+        window.toggleDarkMode = toggleDarkMode;
+        window.createPost = createPost;
+        window.deletePost = deletePost;
+        window.clearAllPosts = clearAllPosts;
+        window.toggleLike = toggleLike;
+        window.toggleDislike = toggleDislike;
+        window.addComment = addComment;
+        window.removeImage = removeImage;
+        window.removeVideo = removeVideo;
+        window.filterByUser = filterByUser; // Expose filterByUser
+        window.clearFilter = clearFilter; // Expose clearFilter
+        window.showAuthModal = showAuthModal; // Expose auth modal
+        window.logoutUser = logoutUser; // Expose logoutUser
+    </script>
+</head>
+<body>
+    <nav>
+        <div class="nav-left">
+            <i class="fas fa-palette"></i>
+        </div>
+        <div class="logo">PixUp</div>
+        <div class="nav-right" onclick="toggleMenu()">
+            <i class="fas fa-bars"></i>
+        </div>
+        <div class="menu-dropdown" id="menuDropdown">
+            <button id="nameBtn">
+                <i class="fas fa-user-slash"></i> Login / Sign Up
+            </button>
+            <button onclick="clearAllPosts()">
+                <i class="fas fa-trash-alt"></i> Clear My Posts
+            </button>
+            <button onclick="toggleDarkMode()">
+                <i class="fas fa-adjust"></i> Toggle Theme
+            </button>
+        </div>
+    </nav>
+    <center>
+        <h1 id="welcome">Welcome!</h1>
+        <h2>Create Post:</h2>
+    </center>
+    <div class="container">
+        <div class="create-post">
+            <textarea id="postText" placeholder="What's on your mind, Anonymous?" required></textarea>
+            <select id="emojiPicker">
+                <option value="">Select Emoji Ì†ΩÌ∏Ä</option>
+                <option value="Ì†ΩÌ∏Ä">Ì†ΩÌ∏Ä Grinning Face</option>
+                <option value="Ì†ΩÌ∏Ç">Ì†ΩÌ∏Ç Face with Tears of Joy</option>
+                <option value="Ì†ΩÌ∏ç">Ì†ΩÌ∏ç Smiling Face with Heart-Eyes</option>
+                <option value="Ì†ΩÌ∏é">Ì†ΩÌ∏é Smiling Face with Sunglasses</option>
+                <option value="Ì†ΩÌ±ç">Ì†ΩÌ±ç Thumbs Up</option>
+                <option value="Ì†ΩÌ≤ö">Ì†ΩÌ≤ö Green Heart</option>
+                <option value="Ì†ºÌΩÉ">Ì†ºÌΩÉ Leaf Fluttering in Wind</option>
+                <option value="Ì†ºÌΩî">Ì†ºÌΩî Hamburger</option>
+                <option value="Ì†ºÌΩï">Ì†ºÌΩï Pizza</option>
+            </select>
+            <div id="mediaPreview" style="display: none;">
+                <img id="imagePreview" alt="Image preview" />
+                <video id="videoPreview" controls preload="metadata"></video>
+                <div style="display: flex; gap: 10px; justify-content: center; width: 100%;">
+                    <button id="removeImageBtn" onclick="removeImage()">Remove Image</button>
+                    <button id="removeVideoBtn" onclick="removeVideo()">Remove Video</button>
+                </div>
+            </div>
+            <div style="display:flex; gap:10px; flex-wrap: wrap;">
+                <button onclick="createPost()" style="flex: 1;">
+                    <i class="fas fa-paper-plane"></i> Post
+                </button>
+                <input type="file" id="imageInput" accept="image/*" style="display:none;">
+                <input type="file" id="videoInput" accept="video/*" style="display:none;">
+                <label for="videoInput" style="flex: 1;">
+                    <i class="fas fa-video"></i> Upload Video
+                </label>
+                <label for="imageInput" style="flex: 1;">
+                    <i class="fas fa-image"></i> Upload Image
+                </label>
+            </div>
+        </div>
+        <p style="text-align: center; color: #999;" id="noPosts"></p>
+        <div class="loading-spinner" id="loadingSpinner"></div>
+        <div id="filterIndicator"></div>
+        <button id="clearFilterBtn" onclick="clearFilter()" style="display:none;">Show All Posts</button>
+        <div id="feed"></div>
+    </div>
+
+    <!-- Custom Message Modal -->
+    <div id="messageModal" class="modal">
+        <div class="modal-content">
+            <p id="modalMessage"></p>
+            <div id="modalConfirmButtons" class="modal-buttons">
+                <button class="modal-button" id="modalConfirmOk">OK</button>
+                <button class="modal-button" id="modalConfirmCancel">Cancel</button>
+            </div>
+            <div id="modalAlertButton" class="modal-buttons">
+                <button class="modal-button" id="modalAlertOk">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login/Signup Modal -->
+    <div id="authModal" class="modal">
+        <div class="modal-content">
+            <h2 id="authModalTitle">Login to PixUp</h2>
+            <div class="input-group">
+                <label for="authUsernameInput">Username:</label>
+                <input type="text" id="authUsernameInput" placeholder="Enter username">
+            </div>
+            <div class="input-group">
+                <label for="authPasswordInput">Password:</label>
+                <input type="password" id="authPasswordInput" placeholder="Enter password">
+            </div>
+            <div class="modal-buttons">
+                <button class="modal-button" id="authSubmitBtn">Login</button>
+            </div>
+            <button class="toggle-auth-mode" id="authToggleModeBtn">New user? Sign Up</button>
+        </div>
+    </div>
+</body>
+</html>
